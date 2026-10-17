@@ -1,152 +1,63 @@
-# zhiyan-tedify · 智言：面向大学生路演的 AI 语音表达训练平台
+<div align="right">
 
-> 一句话简介：把一次性的表达点评变成可复测的训练闭环——场景选择 → 真实录音 → 本地声学证据 → 转写补充 → 训练任务 → 复测报告。
+**[English](README.md)** · [简体中文](README.zh-CN.md)
 
-2026 中国国际大学生创新大赛（高教主赛道 · 本科生创意组）项目的完整策划文档与工具。
+</div>
 
-## 一、项目是什么
+# zhiyan-tedify
 
-大学生在课堂展示、创新创业路演、求职面试中普遍面临一个问题：
+Turning a one-off critique into a repeatable training loop — scene, recording, acoustic evidence, transcript, task, re-test.
 
-> **知道内容但说不清、练习没有反馈、反馈无法转化为下一轮行动。**
+<sub>Markdown · Python · product proposal and planning documents</sub>
 
-现有工具多聚焦文稿生成、单点语言评分或一次性点评，难以形成面向真实场景的持续训练闭环。
+---
 
-智言的做法是：**以真实录音为训练起点**，把一次表达变成可复测的闭环。
+## The problem
 
-### 核心闭环
+Students preparing a pitch run into the same three things: they know the content but cannot say it, practice produces no feedback, and feedback does not turn into what to do next.
 
-```
-选择表达场景 → 完成基线录音 → 提取本地声学证据
-→ 补充转写文本 → 生成训练任务 → 复测并形成进步报告
-```
-
-### 三个设计支点
-
-**① 录音优先，而非文字优先**
-
-首期把「浏览器本地录音」作为主入口，文字输入降级为转写补充。
-
-这是产品迭代日志里的关键改动——v0.1 版原本用文字输入做主入口，但那样就退化成普通 AI 写作工具，与「表达训练」无关。
-
-**② 本地声学证据，不上传原始音频**
-
-声学活动分析（语速、停顿、填充词、响度变化）在浏览器本地完成，只把统计结果而不是原始音频送到服务端。既是隐私设计，也是成本设计。
-
-**③ 问题必须绑定证据**
-
-每条诊断结论都要指出「是哪一句话、哪一段停顿、哪个指标」触发的，而不是只给一个分数。
-
-## 二、MVP 边界
-
-### 现在就做：语音优先的离线 MVP
-
-- 单文件 HTML/CSS/JavaScript，不接后端、不接数据库、不需要 API Key
-- 浏览器 `MediaRecorder` 本地录音和回放；音频不上传
-- 本地声学监测生成时长、活动占比、有效停顿等基础数据
-- 内置一套明确标注为「演示数据」的报告，保证答辩现场没有麦克风时仍可完整展示
-
-### 暂不做
-
-- 不做用户注册、教师后台、支付、数据库和复杂权限
-- 不训练专属大模型
-- **不把「准确率、用户数、营收、提升比例」写成成果，除非有真实记录**
-- 不同时做五个产品，首版只服务表达训练主闭环
-
-## 三、方向决策记录
-
-文档里保留了一份**候选方向多维评分表**——五个候选方向 × 五个维度（个人成长/项目创新/产业价值/团队可讲性/低成本），1—5 分：
-
-| 方向 | 成长 | 创新 | 价值 | 可讲性 | 低成本 | 判断 |
-|---|---|---|---|---|---|---|
-| 智言·路演语音训练 | 5 | 5 | 4 | 5 | 5 | **主方向** |
-| 融研智笔·作文批改 | 4 | 3 | 3 | 4 | 5 | 外语模块保留 |
-| AI+非遗国际传播 | 3 | 4 | 4 | 3 | 3 | 同质化+调研压力 |
-| AI乡村学校英语 | 4 | 4 | 4 | 3 | 2 | 需真实乡村资源 |
-| AI智慧伴游 | 3 | 4 | 4 | 3 | 3 | 需文旅场景资源 |
-
-**「低成本」也是打分维度**——对学生项目来说，能不能零成本做出来和创意好坏同等重要。
-
-每个被否方向都写了具体资源门槛，不写「不适合」这种模糊判断。
-
-## 四、文件结构
+Most tools address one of those. This proposal works on the whole loop:
 
 ```
-├── docs/
-│   ├── 2026大创_智言项目申报初稿.md      # 网报与计划书初稿
-│   ├── 智言_作品研究与低成本路线.md       # 方向决策 + MVP 边界
-│   ├── 智言_重点项目冲刺包.md            # 冲刺阶段任务分解
-│   ├── 智言_调研问卷与访谈提纲.md         # 12 题问卷 + 7 问访谈
-│   └── 智言_1分钟演示脚本.md             # 答辩/路演脚本
-└── scripts/
-    └── build_key_project_tracker.py      # 证据记录表生成器
+choose a scenario → record a baseline → extract acoustic evidence
+→ confirm the transcript → generate tasks → re-record and compare
 ```
 
-## 五、调研设计要点
+## Three design decisions
 
-### 问卷题目与产品假设一一对应
+**Recording first, not text first**
 
-| 题目 | 验证什么 |
-|---|---|
-| 第 4 题 | 「问题缺少结构化诊断」痛点真实存在 |
-| 第 6 题 | 现有反馈确实不足 |
-| 第 7 题 | 用户想要哪些诊断维度 |
-| 第 8 题 | 训练形式偏好（决定 MVP 用短任务还是完整模拟） |
-| 第 10 题 | 隐私顾虑分布（决定「本地分析」是不是真卖点） |
-| 第 11 题 | 试用意愿 |
+An earlier version used text input as the main entry point. It demonstrated that a diagnostic pipeline existed, but it cannot evaluate pace, pauses, filler words, whether the delivery sounds read, or how confident it feels.
 
-第 10 题尤其关键——如果多数人选「没有顾虑」，那「本地分析不上传」这个设计卖点就要重新论证。
+So recording became the entry point, and text input became the fallback for analysing a written script.
 
-### 访谈要求记录「原话、具体事件、现有替代方案」
+**Local acoustic analysis, no uploaded audio**
 
-文档里明确写了：**不要只记录态度判断**。
+Pace, pauses, filler rate and loudness variation are computed in the browser. Only statistics leave the machine, not the recording. This is both a privacy decision and a cost decision.
 
-「我觉得挺好的」是态度判断；「我上次社团汇报忘了讲成本那部分，下来同学跟我说没听懂」是具体事件。前者不能支撑产品决策，后者可以。
+**Every finding binds to evidence**
 
-## 六、演示脚本的「禁语清单」
+A diagnosis has to point at which sentence, which pause, which metric produced it. A score alone is not actionable.
 
-1 分钟演示脚本里专门列了三条禁语：
-
-- 不说「真实用户已经提升多少」
-- 不说「已有多少付费用户」
-- 不说「发音准确率多少」
-
-并且给了标准应答——被问到 AI 是否真实接入时：
-
-> 当前展示版已真实完成浏览器本地录音、回放、时长和基础声学活动分析；文本到问题/任务采用确定性本地规则，目的是验证训练交互与服务模式；后续再替换为可控成本的转写或模型接口。
-
-既诚实（承认用本地规则）又说明演进路径，比含糊其辞的「我们用了先进的 AI 技术」可信得多。
-
-## 七、证据表生成器
-
-`scripts/build_key_project_tracker.py` 用 openpyxl 生成一份可直接交付的 Excel，6 个 sheet：团队分工、试用记录、访谈记录、问卷汇总、产品迭代、重点项目检查。
-
-代码上的几个工程化写法：
-
-- 配色集中定义在顶部（7 个常量）
-- `add_sheet()` 封装重复样式：冻结首行、关网格线、表头着色、自动换行、注册 Excel 表格对象（自带条纹+筛选）
-- 模板行用列表推导批量生成
-- 全局收尾循环：fitToPage + tabColor
-
-> 已知边界：`chr(64 + i)` 只够到 26 列。本项目最多 11 列够用，通用版本应改用 `openpyxl.utils.get_column_letter()`。
-
-## 八、工作顺序
+## Repository contents
 
 ```
-第一阶段  作品成型   静态网页、产品说明、演示流程
-第二阶段  调研验证   问卷 + 访谈，形成统计图表和原始记录
-第三阶段  书面材料   Word 计划书、路演 PPT、调研报告、1 分钟脚本
-第四阶段  低成本增强 按初赛反馈决定是否接 API
+docs/2026大创_智言项目申报初稿.md          application draft
+docs/智言_作品研究与低成本路线.md           direction decision, MVP boundaries
+docs/智言_重点项目冲刺包.md                two-week pilot plan
+docs/智言_调研问卷与访谈提纲.md             survey and interview guide
+docs/智言_1分钟演示脚本.md                 demo script, with words to avoid
+scripts/build_key_project_tracker.py      evidence-tracker generator (openpyxl)
 ```
 
-材料放最后写，且要求「每一个数字和成果都能回到作品或调研证据」。
+## The part worth reading
 
-## 九、相关仓库
+The **direction decision document** contains a scored comparison of five candidate products against five dimensions — including *low cost* as a scored dimension, because for a student project whether something can be built for nothing matters as much as whether the idea is good.
 
-- [zhiyan](https://github.com/YGtemple/zhiyan) —— 前身项目，TEDify V2 网页架构、17 项表达画像、评分 Rubric、问题到任务映射
-- [rongyan](https://github.com/YGtemple/rongyan) —— 融研智笔，提供外语展示场景经验
-- [ai-drama-asset-prompts](https://github.com/YGtemple/ai-drama-asset-prompts) —— AI 短剧资产提示词工程
+Each rejected direction records its specific resource barrier ("needs a tourism partner", "needs real rural service access") rather than "not a good fit".
 
-## 许可证
+There is also a written boundary: **do not report accuracy, user counts or revenue as results unless there is a record of them.**
 
-MIT License
+## License
+
+MIT
